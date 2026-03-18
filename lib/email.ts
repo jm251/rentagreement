@@ -1,0 +1,57 @@
+import "server-only";
+
+import nodemailer from "nodemailer";
+
+import { buildAbsoluteUrl } from "@/lib/utils";
+import type { AgreementRecord } from "@/types/agreement";
+
+export async function sendAgreementReadyEmail(
+  agreement: AgreementRecord,
+  pdfUrl: string | null,
+) {
+  if (
+    !process.env.SMTP_HOST ||
+    !process.env.SMTP_PORT ||
+    !process.env.SMTP_USER ||
+    !process.env.SMTP_PASS ||
+    !process.env.SMTP_FROM_EMAIL
+  ) {
+    return false;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  const previewUrl = buildAbsoluteUrl(
+    `/preview/${agreement.id}?token=${agreement.access_token}`,
+  );
+  const successUrl = buildAbsoluteUrl(
+    `/success?agreementId=${agreement.id}&token=${agreement.access_token}`,
+  );
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM_EMAIL,
+    to: agreement.contact_email,
+    subject: `Your rent agreement is ready - ${agreement.agreement_number ?? agreement.id}`,
+    html: `
+      <div style="font-family: Georgia, serif; line-height: 1.6; color: #201913;">
+        <h2 style="margin-bottom: 8px;">Your agreement is ready</h2>
+        <p>Your payment was verified successfully. You can review and download the generated agreement from the links below.</p>
+        <p><strong>Agreement ID:</strong> ${agreement.agreement_number ?? agreement.id}</p>
+        <p><a href="${previewUrl}">Preview agreement</a></p>
+        ${pdfUrl ? `<p><a href="${pdfUrl}">Download PDF</a></p>` : ""}
+        <p><a href="${successUrl}">Open success page</a></p>
+        <p style="margin-top: 24px; color: #6a5948;">This document is computer-generated from user inputs and should be reviewed before execution, stamping, notarization, or registration.</p>
+      </div>
+    `,
+  });
+
+  return true;
+}

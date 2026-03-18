@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top, rgba(219, 185, 127, 0.22), transparent 30%),
+      linear-gradient(135deg, rgba(141, 95, 45, 0.04), transparent 55%);
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+}
