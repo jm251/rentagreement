@@ -1,9 +1,12 @@
 import "server-only";
 
 import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
+import puppeteer, { type Page } from "puppeteer-core";
 
-export async function renderPdfBufferFromHtml(html: string) {
+async function withAgreementPage<T>(
+  html: string,
+  callback: (page: Page) => Promise<T>,
+) {
   chromium.setGraphicsMode = false;
 
   const browser = await puppeteer.launch({
@@ -14,9 +17,21 @@ export async function renderPdfBufferFromHtml(html: string) {
 
   try {
     const page = await browser.newPage();
+    await page.setViewport({
+      width: 1240,
+      height: 1754,
+      deviceScaleFactor: 2,
+    });
     await page.setContent(html, { waitUntil: "networkidle0" });
+    return await callback(page);
+  } finally {
+    await browser.close();
+  }
+}
 
-    return Buffer.from(
+export async function renderPdfBufferFromHtml(html: string) {
+  return withAgreementPage(html, async (page) =>
+    Buffer.from(
       await page.pdf({
         format: "A4",
         printBackground: true,
@@ -35,8 +50,17 @@ export async function renderPdfBufferFromHtml(html: string) {
           </div>
         `,
       }),
-    );
-  } finally {
-    await browser.close();
-  }
+    ),
+  );
+}
+
+export async function renderImageBufferFromHtml(html: string) {
+  return withAgreementPage(html, async (page) =>
+    Buffer.from(
+      await page.screenshot({
+        type: "png",
+        fullPage: true,
+      }),
+    ),
+  );
 }

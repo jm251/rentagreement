@@ -211,11 +211,33 @@ export function createCompatibilityToken() {
 }
 
 export function getAgreementPreviewPath(agreementId: string) {
-  return `/preview/${agreementId}?token=${encodeURIComponent(
+  return getAgreementPreviewPathWithToken(
+    agreementId,
     createAgreementPreviewToken(agreementId),
-  )}`;
+  );
 }
 
 export function getAdminSessionMaxAgeSeconds() {
   return ADMIN_SESSION_TTL_SECONDS;
+}
+
+export function getAgreementPreviewPathWithToken(
+  agreementId: string,
+  token: string,
+) {
+  return `/preview/${agreementId}?token=${encodeURIComponent(token)}`;
+}
+
+export function getAgreementPdfDownloadPath(
+  agreementId: string,
+  token: string,
+) {
+  return `/api/agreement-pdf/${agreementId}?token=${encodeURIComponent(token)}`;
+}
+
+export function getAgreementImageDownloadPath(
+  agreementId: string,
+  token: string,
+) {
+  return `/api/agreement-image/${agreementId}?token=${encodeURIComponent(token)}`;
 }

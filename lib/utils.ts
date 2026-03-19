@@ -75,3 +75,17 @@ export function buildAbsoluteUrl(path: string) {
   const baseUrl = getEnv("NEXT_PUBLIC_APP_URL")?.replace(/\/$/, "") || "http://localhost:3000";
   return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+export function toSafeDownloadFilename(
+  value: string | null | undefined,
+  extension: string,
+) {
+  const stem =
+    value
+      ?.trim()
+      .replace(/[^a-zA-Z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase() || "agreement";
+
+  return `${stem}.${extension.replace(/^\./, "")}`;
+}

@@ -12,6 +12,48 @@ import {
 } from "@/lib/supabase/agreements";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
+async function attemptAgreementEmailDelivery(agreement: Awaited<ReturnType<typeof fetchAgreementById>>) {
+  if (!agreement) {
+    return {
+      agreement: null,
+      emailSent: false,
+      emailError: "Agreement not found.",
+    };
+  }
+
+  if (agreement.email_sent_at) {
+    return {
+      agreement,
+      emailSent: true,
+      emailError: undefined,
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const emailResult = await sendAgreementReadyEmail(agreement);
+
+  if (!emailResult.sent) {
+    return {
+      agreement,
+      emailSent: false,
+      emailError: emailResult.error,
+    };
+  }
+
+  await supabase
+    .from("agreements")
+    .update({ email_sent_at: new Date().toISOString() })
+    .eq("id", agreement.id);
+
+  const refreshedAgreement = await fetchAgreementById(agreement.id);
+
+  return {
+    agreement: refreshedAgreement ?? agreement,
+    emailSent: true,
+    emailError: undefined,
+  };
+}
+
 function getPaymentIntentId(
   paymentIntent: string | { id: string } | null,
 ) {
@@ -43,10 +85,13 @@ export async function finalizeStripePaymentForAgreement(
   }
 
   if (agreement.status === "paid" && agreement.pdf_path) {
+    const emailStatus = await attemptAgreementEmailDelivery(agreement);
+
     return {
-      agreement,
+      agreement: emailStatus.agreement ?? agreement,
       pdfUrl: await createAgreementPdfSignedUrl(agreement.pdf_path),
-      emailSent: Boolean(agreement.email_sent_at),
+      emailSent: emailStatus.emailSent,
+      emailError: emailStatus.emailError,
       paymentId: agreement.stripe_payment_intent_id,
     };
   }
@@ -92,23 +137,15 @@ export async function finalizeStripePaymentForAgreement(
     throw new Error("Unable to reload updated agreement.");
   }
 
-  let emailSent = Boolean(updatedAgreement.email_sent_at);
-  if (!emailSent) {
-    emailSent = await sendAgreementReadyEmail(updatedAgreement, storedPdf.url);
-    if (emailSent) {
-      await supabase
-        .from("agreements")
-        .update({ email_sent_at: new Date().toISOString() })
-        .eq("id", updatedAgreement.id);
-    }
-  }
+  const emailStatus = await attemptAgreementEmailDelivery(updatedAgreement);
 
   const finalAgreement = await fetchAgreementById(agreement.id);
 
   return {
     agreement: finalAgreement ?? updatedAgreement,
     pdfUrl: storedPdf.url,
-    emailSent,
+    emailSent: emailStatus.emailSent,
+    emailError: emailStatus.emailError,
     paymentId: paymentIntentId,
   };
 }

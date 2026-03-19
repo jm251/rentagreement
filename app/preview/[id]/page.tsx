@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
 
+import { AgreementActionBar } from "@/components/agreement/agreement-action-bar";
 import { AgreementDocument } from "@/components/agreement/agreement-document";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { createAgreementPdfSignedUrl, fetchAgreementById } from "@/lib/supabase/agreements";
+import { fetchAgreementById } from "@/lib/supabase/agreements";
 import { mapRecordToPreparedAgreement } from "@/lib/agreement";
-import { verifyAgreementPreviewToken } from "@/lib/security";
+import {
+  getAgreementImageDownloadPath,
+  getAgreementPdfDownloadPath,
+  verifyAgreementPreviewToken,
+} from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +31,11 @@ export default async function PreviewPage({
   }
 
   const preparedAgreement = mapRecordToPreparedAgreement(agreement);
-  const pdfUrl = agreement.pdf_path
-    ? await createAgreementPdfSignedUrl(agreement.pdf_path)
-    : null;
+  const pdfDownloadUrl = getAgreementPdfDownloadPath(agreement.id, searchParams.token);
+  const imageDownloadUrl = getAgreementImageDownloadPath(
+    agreement.id,
+    searchParams.token,
+  );
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 lg:px-8">
@@ -42,19 +48,20 @@ export default async function PreviewPage({
             {agreement.agreement_number || agreement.id}
           </h1>
         </div>
-        <div className="flex flex-wrap gap-3">
-          {pdfUrl ? (
-            <Button asChild>
-              <a href={pdfUrl} target="_blank" rel="noreferrer">
-                Download PDF
-              </a>
-            </Button>
-          ) : null}
-        </div>
       </div>
       <Card className="bg-transparent shadow-none">
         <AgreementDocument agreement={preparedAgreement} />
       </Card>
+      <div className="mt-8">
+        <AgreementActionBar
+          agreementId={agreement.id}
+          token={searchParams.token}
+          pdfDownloadUrl={pdfDownloadUrl}
+          imageDownloadUrl={imageDownloadUrl}
+          contactEmail={agreement.contact_email}
+          initialEmailSent={Boolean(agreement.email_sent_at)}
+        />
+      </div>
     </main>
   );
 }

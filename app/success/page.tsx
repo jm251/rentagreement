@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AgreementActionBar } from "@/components/agreement/agreement-action-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEnvFlag } from "@/lib/env";
 import { finalizeStripePaymentForAgreement } from "@/lib/payment";
-import { createAgreementPdfSignedUrl, fetchAgreementById } from "@/lib/supabase/agreements";
-import { getAgreementPreviewPath } from "@/lib/security";
+import { fetchAgreementById } from "@/lib/supabase/agreements";
+import {
+  createAgreementPreviewToken,
+  getAgreementImageDownloadPath,
+  getAgreementPdfDownloadPath,
+  getAgreementPreviewPathWithToken,
+} from "@/lib/security";
 import { buildAbsoluteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -31,15 +37,16 @@ export default async function SuccessPage({
   );
   const agreement = result.agreement;
 
-  const pdfUrl = agreement.pdf_path
-    ? await createAgreementPdfSignedUrl(agreement.pdf_path)
-    : null;
-  const previewUrl = getAgreementPreviewPath(agreement.id);
+  const previewToken = createAgreementPreviewToken(agreement.id);
+  const previewUrl = getAgreementPreviewPathWithToken(agreement.id, previewToken);
+  const pdfDownloadUrl = getAgreementPdfDownloadPath(agreement.id, previewToken);
+  const imageDownloadUrl = getAgreementImageDownloadPath(agreement.id, previewToken);
   const previewAbsoluteUrl = buildAbsoluteUrl(previewUrl);
+  const pdfAbsoluteUrl = buildAbsoluteUrl(pdfDownloadUrl);
   const whatsappShare =
-    pdfUrl && getEnvFlag("NEXT_PUBLIC_ENABLE_WHATSAPP_SHARE", true)
+    getEnvFlag("NEXT_PUBLIC_ENABLE_WHATSAPP_SHARE", true)
       ? `https://wa.me/?text=${encodeURIComponent(
-          `Your agreement is ready. Preview: ${previewAbsoluteUrl}${pdfUrl ? ` | PDF: ${pdfUrl}` : ""}`,
+          `Your agreement is ready. Preview: ${previewAbsoluteUrl} | PDF: ${pdfAbsoluteUrl}`,
         )}`
       : null;
 
@@ -58,20 +65,16 @@ export default async function SuccessPage({
           <div className="grid gap-4 md:grid-cols-2">
             <SummaryItem label="Status" value={agreement.status} />
             <SummaryItem label="Payment ID" value={agreement.stripe_payment_intent_id || "Pending"} />
-            <SummaryItem label="Email sent" value={agreement.email_sent_at ? "Yes" : "Not sent"} />
+            <SummaryItem
+              label="Email sent"
+              value={result.emailSent ? "Yes" : "Not sent yet"}
+            />
             <SummaryItem label="Contact email" value={agreement.contact_email} />
           </div>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
               <Link href={previewUrl}>Preview agreement</Link>
             </Button>
-            {pdfUrl ? (
-              <Button asChild variant="outline">
-                <a href={pdfUrl} target="_blank" rel="noreferrer">
-                  Download PDF
-                </a>
-              </Button>
-            ) : null}
             {whatsappShare ? (
               <Button asChild variant="outline">
                 <a href={whatsappShare} target="_blank" rel="noreferrer">
@@ -80,6 +83,14 @@ export default async function SuccessPage({
               </Button>
             ) : null}
           </div>
+          <AgreementActionBar
+            agreementId={agreement.id}
+            token={previewToken}
+            pdfDownloadUrl={pdfDownloadUrl}
+            imageDownloadUrl={imageDownloadUrl}
+            contactEmail={agreement.contact_email}
+            initialEmailSent={result.emailSent}
+          />
         </CardContent>
       </Card>
     </main>

@@ -76,3 +76,16 @@ export async function createAgreementPdfSignedUrl(path: string) {
 
   return data.signedUrl;
 }
+
+export async function downloadAgreementPdf(path: string) {
+  const supabase = createSupabaseAdminClient();
+  const bucket = getBucketName();
+
+  const { data, error } = await supabase.storage.from(bucket).download(path);
+
+  if (error) {
+    throw error;
+  }
+
+  return Buffer.from(await data.arrayBuffer());
+}
