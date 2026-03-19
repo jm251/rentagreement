@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextRequest, NextResponse } from "next/server";
 
+import { getEnv } from "@/lib/env";
 import {
   createAdminSessionToken,
   getAdminSessionMaxAgeSeconds,
@@ -28,8 +29,8 @@ function getCookieOptions() {
 }
 
 export function areAdminCredentialsValid(username: string, password: string) {
-  const expectedUsername = process.env.ADMIN_USERNAME;
-  const expectedPassword = process.env.ADMIN_PASSWORD;
+  const expectedUsername = getEnv("ADMIN_USERNAME");
+  const expectedPassword = getEnv("ADMIN_PASSWORD");
 
   if (!expectedUsername || !expectedPassword) {
     return false;

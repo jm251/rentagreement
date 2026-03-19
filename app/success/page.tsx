@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getEnvFlag } from "@/lib/env";
 import { finalizeStripePaymentForAgreement } from "@/lib/payment";
 import { createAgreementPdfSignedUrl, fetchAgreementById } from "@/lib/supabase/agreements";
 import { getAgreementPreviewPath } from "@/lib/security";
@@ -36,7 +37,7 @@ export default async function SuccessPage({
   const previewUrl = getAgreementPreviewPath(agreement.id);
   const previewAbsoluteUrl = buildAbsoluteUrl(previewUrl);
   const whatsappShare =
-    pdfUrl && process.env.NEXT_PUBLIC_ENABLE_WHATSAPP_SHARE !== "false"
+    pdfUrl && getEnvFlag("NEXT_PUBLIC_ENABLE_WHATSAPP_SHARE", true)
       ? `https://wa.me/?text=${encodeURIComponent(
           `Your agreement is ready. Preview: ${previewAbsoluteUrl}${pdfUrl ? ` | PDF: ${pdfUrl}` : ""}`,
         )}`

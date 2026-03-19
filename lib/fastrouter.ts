@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getEnv } from "@/lib/env";
 import type { ClauseGenerationSchema } from "@/lib/validators";
 import { clauseSchema } from "@/lib/validators";
 import {
@@ -35,9 +36,9 @@ function extractTextContent(
 }
 
 export async function generateAiClauses(input: ClauseGenerationSchema) {
-  const apiKey = process.env.FASTROUTER_API_KEY_3;
-  const apiUrl = process.env.FASTROUTER_API_URL;
-  const model = process.env.FASTROUTER_MODEL;
+  const apiKey = getEnv("FASTROUTER_API_KEY_3");
+  const apiUrl = getEnv("FASTROUTER_API_URL");
+  const model = getEnv("FASTROUTER_MODEL");
 
   if (!apiKey || !apiUrl || !model) {
     throw new Error("AI clause generation is not configured.");
@@ -73,7 +74,7 @@ export async function generateAiClauses(input: ClauseGenerationSchema) {
     ({ error: { message: rawResponse.trim() } } satisfies FastRouterResponse);
 
   if (!response.ok) {
-    throw new Error("AI clause generation request failed.");
+    throw new Error(payload.error?.message || "AI clause generation request failed.");
   }
 
   const text = extractTextContent(payload.choices?.[0]?.message?.content);

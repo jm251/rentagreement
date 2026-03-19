@@ -7,6 +7,8 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 
+import { getEnv } from "@/lib/env";
+
 const TOKEN_VERSION = 1;
 const AGREEMENT_PREVIEW_TTL_SECONDS = 60 * 60 * 24 * 7;
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 8;
@@ -42,9 +44,9 @@ function base64UrlDecode(value: string) {
 
 function getSigningSecret(namespace: string) {
   const baseSecret =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.STRIPE_SECRET_KEY ||
-    process.env.ADMIN_PASSWORD;
+    getEnv("SUPABASE_SERVICE_ROLE_KEY") ||
+    getEnv("STRIPE_SECRET_KEY") ||
+    getEnv("ADMIN_PASSWORD");
 
   if (!baseSecret) {
     throw new Error("Server signing secret is not configured.");

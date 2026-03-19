@@ -2,6 +2,7 @@ import "server-only";
 
 import Stripe from "stripe";
 
+import { getEnv } from "@/lib/env";
 import { buildAbsoluteUrl } from "@/lib/utils";
 
 type CheckoutOptions = {
@@ -13,12 +14,15 @@ type CheckoutOptions = {
 };
 
 export function getStripeClient() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const secretKey = getEnv("STRIPE_SECRET_KEY");
   if (!secretKey) {
     throw new Error("STRIPE_SECRET_KEY is not configured.");
   }
 
-  return new Stripe(secretKey);
+  return new Stripe(secretKey, {
+    maxNetworkRetries: 1,
+    timeout: 20_000,
+  });
 }
 
 export async function createStripeCheckoutSession(options: CheckoutOptions) {
@@ -70,7 +74,7 @@ export async function retrieveStripeCheckoutSession(sessionId: string) {
 
 export function verifyStripeWebhookEvent(payload: string, signature: string) {
   const stripe = getStripeClient();
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = getEnv("STRIPE_WEBHOOK_SECRET");
 
   if (!webhookSecret) {
     throw new Error("STRIPE_WEBHOOK_SECRET is not configured.");

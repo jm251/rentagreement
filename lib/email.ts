@@ -2,6 +2,7 @@ import "server-only";
 
 import nodemailer from "nodemailer";
 
+import { getEnv, getEnvFlag, getEnvNumber } from "@/lib/env";
 import { getAgreementPreviewPath } from "@/lib/security";
 import { buildAbsoluteUrl } from "@/lib/utils";
 import type { AgreementRecord } from "@/types/agreement";
@@ -10,23 +11,29 @@ export async function sendAgreementReadyEmail(
   agreement: AgreementRecord,
   pdfUrl: string | null,
 ) {
+  const smtpHost = getEnv("SMTP_HOST");
+  const smtpPort = getEnvNumber("SMTP_PORT");
+  const smtpUser = getEnv("SMTP_USER");
+  const smtpPass = getEnv("SMTP_PASS");
+  const smtpFromEmail = getEnv("SMTP_FROM_EMAIL");
+
   if (
-    !process.env.SMTP_HOST ||
-    !process.env.SMTP_PORT ||
-    !process.env.SMTP_USER ||
-    !process.env.SMTP_PASS ||
-    !process.env.SMTP_FROM_EMAIL
+    !smtpHost ||
+    !smtpPort ||
+    !smtpUser ||
+    !smtpPass ||
+    !smtpFromEmail
   ) {
     return false;
   }
 
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === "true",
+    host: smtpHost,
+    port: smtpPort,
+    secure: getEnvFlag("SMTP_SECURE", false),
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 
@@ -35,7 +42,7 @@ export async function sendAgreementReadyEmail(
   );
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM_EMAIL,
+    from: smtpFromEmail,
     to: agreement.contact_email,
     subject: `Your rent agreement is ready - ${agreement.agreement_number ?? agreement.id}`,
     html: `

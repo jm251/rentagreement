@@ -1,10 +1,11 @@
 import "server-only";
 
+import { getEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { AgreementRecord } from "@/types/agreement";
 
 function getBucketName() {
-  return process.env.SUPABASE_STORAGE_BUCKET || "agreements";
+  return getEnv("SUPABASE_STORAGE_BUCKET") || "agreements";
 }
 
 export async function fetchAgreementById(id: string) {
