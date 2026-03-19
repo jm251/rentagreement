@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { finalizeStripePaymentForAgreement } from "@/lib/payment";
+import { getAgreementPreviewPath } from "@/lib/security";
 import { paymentVerifySchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -31,8 +32,8 @@ export async function POST(request: Request) {
       agreementNumber: result.agreement.agreement_number,
       paymentId: result.paymentId,
       pdfUrl: result.pdfUrl,
-      previewUrl: `/preview/${result.agreement.id}?token=${result.agreement.access_token}`,
-      successUrl: `/success?agreementId=${result.agreement.id}&token=${result.agreement.access_token}`,
+      previewUrl: getAgreementPreviewPath(result.agreement.id),
+      successUrl: `/success?agreementId=${result.agreement.id}&session_id=${encodeURIComponent(parsed.data.stripeSessionId)}`,
       emailSent: result.emailSent,
     });
   } catch (error) {

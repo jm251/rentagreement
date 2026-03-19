@@ -167,15 +167,11 @@ export function buildAgreementNumber(id: string) {
   return `RAG-${stamp}-${suffix}`;
 }
 
-export function createAgreementAccessToken() {
-  const bytes = new Uint8Array(16);
-  globalThis.crypto?.getRandomValues?.(bytes);
-
-  if (!bytes.some(Boolean)) {
-    return `${Date.now()}${Math.random().toString(16).slice(2, 18)}`;
-  }
-
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+export function createLegacyAgreementAccessToken() {
+  const randomId =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return randomId.replace(/-/g, "");
 }
 
 export function buildRecordPayload(formData: AgreementFormData) {

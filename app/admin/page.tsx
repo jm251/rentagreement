@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -10,16 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { requireAdminPageSession } from "@/lib/admin-auth";
+import { getAgreementPreviewPath } from "@/lib/security";
 import { createAgreementPdfSignedUrl, listAgreements } from "@/lib/supabase/agreements";
 import { formatCurrencyInr } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  requireAdminPageSession();
   const agreements = await listAgreements();
   const rows = await Promise.all(
     agreements.map(async (agreement) => ({
       ...agreement,
+      previewUrl: getAgreementPreviewPath(agreement.id),
       downloadUrl: agreement.pdf_path
         ? await createAgreementPdfSignedUrl(agreement.pdf_path)
         : null,
@@ -30,10 +35,19 @@ export default async function AdminPage() {
     <main className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
       <Card>
         <CardHeader>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">
-            Admin
-          </p>
-          <CardTitle className="mt-3">Generated agreements</CardTitle>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">
+                Admin
+              </p>
+              <CardTitle className="mt-3">Generated agreements</CardTitle>
+            </div>
+            <form action="/api/admin/logout" method="post">
+              <Button type="submit" variant="outline">
+                Sign out
+              </Button>
+            </form>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -74,7 +88,7 @@ export default async function AdminPage() {
                     <div className="flex flex-col gap-2">
                       <Link
                         className="text-sm font-medium text-primary"
-                        href={`/preview/${agreement.id}?token=${agreement.access_token}`}
+                        href={agreement.previewUrl}
                       >
                         Preview
                       </Link>

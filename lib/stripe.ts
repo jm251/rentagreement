@@ -7,7 +7,6 @@ import { buildAbsoluteUrl } from "@/lib/utils";
 type CheckoutOptions = {
   agreementId: string;
   agreementNumber: string;
-  accessToken: string;
   amountPaise: number;
   contactName: string;
   contactEmail: string;
@@ -31,7 +30,7 @@ export async function createStripeCheckoutSession(options: CheckoutOptions) {
     customer_email: options.contactEmail,
     client_reference_id: options.agreementId,
     success_url: buildAbsoluteUrl(
-      `/success?agreementId=${options.agreementId}&session_id={CHECKOUT_SESSION_ID}&token=${options.accessToken}`,
+      `/success?agreementId=${options.agreementId}&session_id={CHECKOUT_SESSION_ID}`,
     ),
     cancel_url: buildAbsoluteUrl(`/generate?payment=cancelled`),
     metadata: {
@@ -39,7 +38,6 @@ export async function createStripeCheckoutSession(options: CheckoutOptions) {
       agreementNumber: options.agreementNumber,
       contactName: options.contactName,
       contactEmail: options.contactEmail,
-      accessToken: options.accessToken,
     },
     line_items: [
       {

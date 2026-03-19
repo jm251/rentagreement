@@ -4,7 +4,7 @@ import {
   buildAgreementNumber,
   buildPreparedAgreement,
   buildRecordPayload,
-  createAgreementAccessToken,
+  createLegacyAgreementAccessToken,
 } from "@/lib/agreement";
 import { renderAgreementHtmlDocument } from "@/lib/render-agreement-html";
 import { createStripeCheckoutSession } from "@/lib/stripe";
@@ -33,27 +33,44 @@ export async function POST(request: Request) {
 
     const formData = parsed.data.formData as AgreementFormData;
     const preparedAgreement = buildPreparedAgreement(formData);
-    const accessToken = createAgreementAccessToken();
+    const draftPayload = {
+      ...buildRecordPayload(formData),
+      status: "draft",
+      payment_provider: "stripe",
+      agreement_number: null,
+      stripe_checkout_session_id: null,
+      stripe_payment_intent_id: null,
+      stripe_payment_status: null,
+      paid_at: null,
+      pdf_path: null,
+      pdf_url: null,
+      email_sent_at: null,
+      html_snapshot: renderAgreementHtmlDocument(preparedAgreement),
+    };
 
-    const { data: createdAgreement, error: insertError } = await supabase
+    let insertResult = await supabase
       .from("agreements")
-      .insert({
-        ...buildRecordPayload(formData),
-        status: "draft",
-        payment_provider: "stripe",
-        agreement_number: null,
-        stripe_checkout_session_id: null,
-        stripe_payment_intent_id: null,
-        stripe_payment_status: null,
-        paid_at: null,
-        pdf_path: null,
-        pdf_url: null,
-        email_sent_at: null,
-        html_snapshot: renderAgreementHtmlDocument(preparedAgreement),
-        access_token: accessToken,
-      })
+      .insert(draftPayload)
       .select("id")
       .single();
+
+    if (
+      insertResult.error?.message &&
+      /null value in column \"access_token\"|violates not-null constraint.*access_token/i.test(
+        insertResult.error.message,
+      )
+    ) {
+      insertResult = await supabase
+        .from("agreements")
+        .insert({
+          ...draftPayload,
+          access_token: createLegacyAgreementAccessToken(),
+        })
+        .select("id")
+        .single();
+    }
+
+    const { data: createdAgreement, error: insertError } = insertResult;
 
     if (insertError || !createdAgreement) {
       if (
@@ -74,7 +91,6 @@ export async function POST(request: Request) {
     const session = await createStripeCheckoutSession({
       agreementId,
       agreementNumber,
-      accessToken,
       amountPaise: preparedAgreement.pricePaise,
       contactName: formData.contact.contactName,
       contactEmail: formData.contact.contactEmail,

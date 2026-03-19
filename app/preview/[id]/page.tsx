@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AgreementDocument } from "@/components/agreement/agreement-document";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { createAgreementPdfSignedUrl, fetchAgreementById } from "@/lib/supabase/agreements";
 import { mapRecordToPreparedAgreement } from "@/lib/agreement";
+import { verifyAgreementPreviewToken } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,11 @@ export default async function PreviewPage({
 }) {
   const agreement = await fetchAgreementById(params.id);
 
-  if (!agreement || searchParams.token !== agreement.access_token) {
+  if (
+    !agreement ||
+    !searchParams.token ||
+    !verifyAgreementPreviewToken(searchParams.token, params.id)
+  ) {
     notFound();
   }
 
@@ -39,11 +43,6 @@ export default async function PreviewPage({
           </h1>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button asChild variant="outline">
-            <Link href={`/success?agreementId=${agreement.id}&token=${agreement.access_token}`}>
-              Success page
-            </Link>
-          </Button>
           {pdfUrl ? (
             <Button asChild>
               <a href={pdfUrl} target="_blank" rel="noreferrer">

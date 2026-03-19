@@ -161,7 +161,6 @@ export interface AgreementRecord {
   pdf_path: string | null;
   pdf_url: string | null;
   email_sent_at: string | null;
-  access_token: string;
   form_data: AgreementFormData;
   ai_clauses: ClauseInput[];
   hardcoded_clauses: AgreementClause[];

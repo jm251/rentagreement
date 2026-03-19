@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { finalizeStripePaymentForAgreement } from "@/lib/payment";
 import { createAgreementPdfSignedUrl, fetchAgreementById } from "@/lib/supabase/agreements";
+import { getAgreementPreviewPath } from "@/lib/security";
 import { buildAbsoluteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -12,30 +13,27 @@ export const dynamic = "force-dynamic";
 export default async function SuccessPage({
   searchParams,
 }: {
-  searchParams: { agreementId?: string; token?: string; session_id?: string };
+  searchParams: { agreementId?: string; session_id?: string };
 }) {
-  if (!searchParams.agreementId) {
+  if (!searchParams.agreementId || !searchParams.session_id) {
     notFound();
   }
 
-  let agreement = await fetchAgreementById(searchParams.agreementId);
-
-  if (!agreement || searchParams.token !== agreement.access_token) {
+  const existingAgreement = await fetchAgreementById(searchParams.agreementId);
+  if (!existingAgreement) {
     notFound();
   }
 
-  if (agreement.status !== "paid" && searchParams.session_id) {
-    const result = await finalizeStripePaymentForAgreement(
-      agreement.id,
-      searchParams.session_id,
-    );
-    agreement = result.agreement;
-  }
+  const result = await finalizeStripePaymentForAgreement(
+    existingAgreement.id,
+    searchParams.session_id,
+  );
+  const agreement = result.agreement;
 
   const pdfUrl = agreement.pdf_path
     ? await createAgreementPdfSignedUrl(agreement.pdf_path)
     : null;
-  const previewUrl = `/preview/${agreement.id}?token=${agreement.access_token}`;
+  const previewUrl = getAgreementPreviewPath(agreement.id);
   const previewAbsoluteUrl = buildAbsoluteUrl(previewUrl);
   const whatsappShare =
     pdfUrl && process.env.NEXT_PUBLIC_ENABLE_WHATSAPP_SHARE !== "false"

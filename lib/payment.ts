@@ -30,15 +30,6 @@ export async function finalizeStripePaymentForAgreement(
     throw new Error("Agreement not found.");
   }
 
-  if (agreement.status === "paid" && agreement.pdf_path) {
-    return {
-      agreement,
-      pdfUrl: await createAgreementPdfSignedUrl(agreement.pdf_path),
-      emailSent: Boolean(agreement.email_sent_at),
-      paymentId: agreement.stripe_payment_intent_id,
-    };
-  }
-
   const session = await retrieveStripeCheckoutSession(stripeSessionId);
   const sessionAgreementId =
     session.metadata?.agreementId || session.client_reference_id;
@@ -49,6 +40,15 @@ export async function finalizeStripePaymentForAgreement(
 
   if (session.payment_status !== "paid") {
     throw new Error("Stripe reports that payment has not completed.");
+  }
+
+  if (agreement.status === "paid" && agreement.pdf_path) {
+    return {
+      agreement,
+      pdfUrl: await createAgreementPdfSignedUrl(agreement.pdf_path),
+      emailSent: Boolean(agreement.email_sent_at),
+      paymentId: agreement.stripe_payment_intent_id,
+    };
   }
 
   const paidAt = session.created

@@ -25,6 +25,7 @@ Next.js 14 MVP for generating Indian rent agreements with:
 
 ## Verification
 
+- `npm run build`
 - `npx tsc --noEmit`
 - FastRouter connectivity verified against the current `.env` values
 
@@ -45,11 +46,14 @@ Next.js 14 MVP for generating Indian rent agreements with:
 ```text
 app/
   api/
+    admin/logout/route.ts
+    admin/session/route.ts
     create-pdf/route.ts
     generate-clauses/route.ts
     payment/initiate/route.ts
     payment/verify/route.ts
     payment/webhook/route.ts
+  admin/login/page.tsx
   admin/page.tsx
   generate/page.tsx
   preview/[id]/page.tsx
@@ -150,7 +154,7 @@ Step 7 calls `/api/generate-clauses`, which posts to `FASTROUTER_API_URL` using 
 
 ### Stripe
 
-`/api/payment/initiate` creates a Stripe Checkout Session server-side using `STRIPE_SECRET_KEY` and redirects the user to the hosted Stripe page. The success redirect includes `agreementId`, `session_id`, and the stored access token. `/success` then finalizes the agreement by verifying the Stripe session server-side, generating the PDF, uploading it to Supabase Storage, and marking the record as paid.
+`/api/payment/initiate` creates a Stripe Checkout Session server-side using `STRIPE_SECRET_KEY` and redirects the user to the hosted Stripe page. The success redirect now includes only `agreementId` and `session_id`. `/success` finalizes the agreement by verifying the Stripe session server-side, generating the PDF, uploading it to Supabase Storage, and marking the record as paid.
 
 `/api/payment/verify` is still available for server-side verification and retries. `/api/payment/webhook` can process Stripe webhook events when `STRIPE_WEBHOOK_SECRET` is configured.
 
@@ -164,6 +168,7 @@ If `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_
 2. Run `supabase/schema.sql`.
 3. Confirm the `agreements` table exists.
 4. Confirm the private `agreements` bucket exists.
+5. Confirm the `rate_limit_counters` table and `consume_rate_limit(...)` function exist if you want DB-backed rate limiting enabled immediately.
 5. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
 
 The service-role key is used only in server code for inserts, updates, PDF storage, and signed URL creation.
@@ -174,10 +179,11 @@ The service-role key is used only in server code for inserts, updates, PDF stora
 2. `/api/payment/initiate` stores a draft agreement in Supabase.
 3. The server creates a Stripe Checkout Session.
 4. The browser redirects to Stripe Checkout.
-5. Stripe redirects back to `/success` with `session_id`.
+5. Stripe redirects back to `/success` with `agreementId` and `session_id`.
 6. The app verifies the session server-side.
 7. The PDF is generated and uploaded to Supabase Storage.
-8. The buyer can preview, download, and optionally receive the agreement by email.
+8. Fresh signed preview links are generated on demand for the success page, email, and WhatsApp share.
+9. The buyer can preview, download, and optionally receive the agreement by email.
 
 ## PDF Generation
 
@@ -191,12 +197,26 @@ PDF generation runs on the Node.js runtime using `puppeteer-core` with `@spartic
 
 ## Admin Page
 
-`/admin` is protected with HTTP basic auth via:
+`/admin` now uses a dedicated login flow:
+
+- `/admin/login`
+- `/api/admin/session`
+- `/api/admin/logout`
+
+Admin credentials are still backed by:
 
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`
 
-The table shows agreement status, contact email, rent, payment amount, preview link, and PDF availability.
+Successful login sets an `admin_session` `httpOnly` cookie. The table shows agreement status, contact email, rent, payment amount, preview link, and PDF availability.
+
+## Security Notes
+
+- Preview links are stateless signed URLs with a 7-day expiry.
+- No agreement access token is stored in the database anymore.
+- `/api/create-pdf` is admin-session only.
+- `/api/generate-clauses` and failed admin logins support Supabase-backed rate limiting when the updated schema is applied.
+- If the new rate-limit schema has not been applied yet, the app degrades gracefully instead of blocking core flows.
 
 ## Run Locally
 
@@ -219,6 +239,7 @@ Routes that use secrets, Stripe, SMTP, or PDF generation already run on the Node
 - Pincode detection uses a local prefix mapping, not a postal API.
 - English is the implemented language in this MVP.
 - `STRIPE_PRICE_*` and `PAYMENT_LINK_*` envs are available but not required by the current Checkout Session flow.
+- DB-backed rate limiting requires the updated `supabase/schema.sql` migration to be applied in the connected Supabase project.
 
 ## Legal Disclaimer
 

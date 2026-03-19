@@ -2,6 +2,7 @@ import "server-only";
 
 import nodemailer from "nodemailer";
 
+import { getAgreementPreviewPath } from "@/lib/security";
 import { buildAbsoluteUrl } from "@/lib/utils";
 import type { AgreementRecord } from "@/types/agreement";
 
@@ -30,10 +31,7 @@ export async function sendAgreementReadyEmail(
   });
 
   const previewUrl = buildAbsoluteUrl(
-    `/preview/${agreement.id}?token=${agreement.access_token}`,
-  );
-  const successUrl = buildAbsoluteUrl(
-    `/success?agreementId=${agreement.id}&token=${agreement.access_token}`,
+    getAgreementPreviewPath(agreement.id),
   );
 
   await transporter.sendMail({
@@ -47,7 +45,6 @@ export async function sendAgreementReadyEmail(
         <p><strong>Agreement ID:</strong> ${agreement.agreement_number ?? agreement.id}</p>
         <p><a href="${previewUrl}">Preview agreement</a></p>
         ${pdfUrl ? `<p><a href="${pdfUrl}">Download PDF</a></p>` : ""}
-        <p><a href="${successUrl}">Open success page</a></p>
         <p style="margin-top: 24px; color: #6a5948;">This document is computer-generated from user inputs and should be reviewed before execution, stamping, notarization, or registration.</p>
       </div>
     `,
