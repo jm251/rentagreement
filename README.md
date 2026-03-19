@@ -1,3 +1,55 @@
+Bugs Found
+🔴 CRITICAL — Supabase Table Missing (P0 Blocker)
+Steps: Step 8 → Fill purchaser contact → Click "Pay & Download PDF"
+Error: "Could not find the table 'public.agreements' in the schema cache"
+Impact: The entire payment and PDF download flow is completely broken. No user can complete a purchase. The public.agreements table needs to be created and migrated in the connected Supabase project.
+
+🔴 CRITICAL — FastRouter AI Clause Generation Fails (P1)
+Steps: Step 7 → Enter special conditions → Click "Generate clauses"
+Error: "FastRouter request failed."
+Impact: The AI-assisted clause generation is non-functional. The API key or endpoint for FastRouter is misconfigured or not set in the environment. Graceful fallback exists (manual clause entry), but a core advertised feature is broken.
+
+🟠 HIGH — Calculated End Date Not Displaying (P2)
+Steps: Step 6 → Enter Start Date (01-04-2026) + Duration (11 months) → "Calculated end date" stays blank
+Expected: Field should auto-populate to "28-02-2027"
+Note: The correct end date does appear in the agreement preview (backend calculates it correctly), but the UI field never updates. This causes confusion — users may think the end date was not captured. The reactive binding between startDate + durationInMonths → endDate field is broken.
+
+🟠 HIGH — No Validation for Empty Calculated End Date (P2)
+Steps: Step 6 → Leave end date blank → Click Continue
+Expected: Should block progression or warn user
+Actual: Form advances to Step 7 silently. Since the calculation is server-side this may be acceptable, but the lack of UI feedback is a UX gap.
+
+🟡 MEDIUM — Validation Errors Don't Clear On Input (P3)
+Observed on: Step 8 Purchaser contact fields, Step 2 City/Pincode
+Issue: After clicking the Continue/Pay button triggers validation errors, typing into fields does not clear the error messages in real time. Users must resubmit to see errors clear.
+Cause: Likely using onSubmit validation only instead of onChange + onBlur error clearing.
+
+🟡 MEDIUM — Misleading Placeholder Styling in Property Fields (P3)
+Observed on: Step 2 — City shows "Mumbai", Pincode shows "400001"
+Issue: These appear to be placeholder text but look like pre-filled values due to styling. When the user submits without interacting with these fields, "City is required." and "Enter a valid 6-digit pincode." errors appear unexpectedly.
+Recommendation: Either use real default values (bound to form state) or use lighter styling for placeholder text to distinguish from actual data.
+
+🟡 MEDIUM — Purchaser Contact Not Pre-filled From Earlier Steps (P3)
+Observed on: Step 8 — "Purchaser contact" section
+Issue: Primary contact name/email/mobile are blank, forcing the user to re-enter info already captured in the Landlord (Step 3). Should default to Landlord's contact info.
+
+🟢 LOW — Property Type/Furnishing Values Display in Raw Code Format (P4)
+Observed in: Agreement preview
+Issue: Property type shows as "flat" (lowercase) and furnishing as "semiFurnished" (camelCase) in the agreement preview.
+Expected: "Flat" and "Semi-Furnished" respectively. These are raw enum/key values leaking into the user-facing document.
+
+Summary Table
+#	Severity	Bug	Status
+#	Severity	Bug	Status
+1	🔴 Critical	Supabase public.agreements table missing — payment broken	Open
+2	🔴 Critical	FastRouter AI clause generation fails	Open
+3	🟠 High	Calculated end date field does not auto-populate in UI	Open
+4	🟠 High	No validation blocking empty end date	Open
+5	🟡 Medium	Validation errors don't clear on input	Open
+6	🟡 Medium	City/Pincode placeholders appear as real values	Open
+7	🟡 Medium	Purchaser contact not pre-filled from landlord data	Open
+8	🟢 Low	Property type/furnishing show as raw code values in preview	
+
 # Rent Agreement Generator India
 
 Next.js 14 MVP for generating Indian rent agreements with:
