@@ -35,7 +35,7 @@ export function LandingHero() {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <FeaturePill icon={ShieldCheck} label="Computer-generated with disclaimer" />
-            <FeaturePill icon={Sparkles} label="FastRouter-powered special clauses" />
+            <FeaturePill icon={Sparkles} label="AI-assisted special clauses" />
             <FeaturePill icon={Wallet} label="₹149 default checkout flow" />
           </div>
         </div>

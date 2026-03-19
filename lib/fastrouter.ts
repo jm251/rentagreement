@@ -40,7 +40,7 @@ export async function generateAiClauses(input: ClauseGenerationSchema) {
   const model = process.env.FASTROUTER_MODEL;
 
   if (!apiKey || !apiUrl || !model) {
-    throw new Error("FastRouter configuration is incomplete.");
+    throw new Error("AI clause generation is not configured.");
   }
 
   const response = await fetch(apiUrl, {
@@ -67,9 +67,13 @@ export async function generateAiClauses(input: ClauseGenerationSchema) {
     cache: "no-store",
   });
 
-  const payload = (await response.json()) as FastRouterResponse;
+  const rawResponse = await response.text();
+  const payload =
+    safeJsonParse<FastRouterResponse>(rawResponse) ||
+    ({ error: { message: rawResponse.trim() } } satisfies FastRouterResponse);
+
   if (!response.ok) {
-    throw new Error(payload.error?.message || "FastRouter request failed.");
+    throw new Error("AI clause generation request failed.");
   }
 
   const text = extractTextContent(payload.choices?.[0]?.message?.content);

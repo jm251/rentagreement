@@ -56,6 +56,15 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError || !createdAgreement) {
+      if (
+        insertError?.message &&
+        /public\.agreements|schema cache|relation .*agreements/i.test(insertError.message)
+      ) {
+        throw new Error(
+          "Supabase agreements table is missing in the connected project. Run supabase/schema.sql and create the agreements storage bucket before retrying payment.",
+        );
+      }
+
       throw new Error(insertError?.message || "Unable to create agreement draft.");
     }
 

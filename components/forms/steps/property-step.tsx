@@ -45,7 +45,11 @@ export function PropertyStep({ form }: { form: UseFormReturn<AgreementFormData> 
           label="City"
           error={form.formState.errors.property?.city?.message}
         >
-          <Input id="city" placeholder="Mumbai" {...form.register("property.city")} />
+          <Input
+            id="city"
+            placeholder="Enter city"
+            {...form.register("property.city")}
+          />
         </FormField>
 
         <FormField
@@ -55,7 +59,7 @@ export function PropertyStep({ form }: { form: UseFormReturn<AgreementFormData> 
         >
           <Input
             id="pincode"
-            placeholder="400001"
+            placeholder="Enter 6-digit pincode"
             inputMode="numeric"
             maxLength={6}
             {...form.register("property.pincode")}
@@ -68,7 +72,11 @@ export function PropertyStep({ form }: { form: UseFormReturn<AgreementFormData> 
           error={form.formState.errors.property?.state?.message}
           hint="Auto-detected from pincode. You can still correct it if needed."
         >
-          <Input id="state" placeholder="Maharashtra" {...form.register("property.state")} />
+          <Input
+            id="state"
+            placeholder="Auto-detected from pincode"
+            {...form.register("property.state")}
+          />
         </FormField>
       </div>
 

@@ -43,7 +43,7 @@ export function SpecialClausesStep({
           <div>
             <h3 className="font-semibold">AI clause generation</h3>
             <p className="text-sm text-muted-foreground">
-              The configured FastRouter model will use your form data and special conditions to draft 3 to 5 formal clauses.
+              The configured AI model will use your form data and special conditions to draft 3 to 5 formal clauses.
             </p>
           </div>
           <Button type="button" onClick={onGenerate} disabled={isGenerating}>

@@ -1,7 +1,8 @@
 import "server-only";
 
+import { FURNISHING_OPTIONS, PROPERTY_TYPE_OPTIONS } from "@/data/constants";
 import { formatAgreementDate } from "@/lib/date";
-import { formatCurrencyInr } from "@/lib/utils";
+import { formatCurrencyInr, getOptionLabel } from "@/lib/utils";
 import type { PreparedAgreement } from "@/types/agreement";
 
 function escapeHtml(value: string) {
@@ -176,8 +177,14 @@ export function renderAgreementHtmlDocument(agreement: PreparedAgreement) {
               .filter(Boolean)
               .join(", "),
           )}
-          ${row("Property Type", formData.property.propertyType)}
-          ${row("Furnishing", formData.property.furnishingType)}
+          ${row(
+            "Property Type",
+            getOptionLabel(formData.property.propertyType, PROPERTY_TYPE_OPTIONS),
+          )}
+          ${row(
+            "Furnishing",
+            getOptionLabel(formData.property.furnishingType, FURNISHING_OPTIONS),
+          )}
           ${row("Amenities", amenities)}
         </section>
 

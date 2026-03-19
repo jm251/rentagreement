@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 
+import { FURNISHING_OPTIONS, PROPERTY_TYPE_OPTIONS } from "@/data/constants";
 import { formatAgreementDate } from "@/lib/date";
-import { formatCurrencyInr } from "@/lib/utils";
+import { formatCurrencyInr, getOptionLabel } from "@/lib/utils";
 import type { PreparedAgreement } from "@/types/agreement";
 
 const pageStyle: CSSProperties = {
@@ -83,8 +84,14 @@ export function AgreementDocument({
               .filter(Boolean)
               .join(", ")}
           />
-          <Row label="Property Type" value={formData.property.propertyType} />
-          <Row label="Furnishing" value={formData.property.furnishingType} />
+          <Row
+            label="Property Type"
+            value={getOptionLabel(formData.property.propertyType, PROPERTY_TYPE_OPTIONS)}
+          />
+          <Row
+            label="Furnishing"
+            value={getOptionLabel(formData.property.furnishingType, FURNISHING_OPTIONS)}
+          />
           <Row
             label="Amenities"
             value={[

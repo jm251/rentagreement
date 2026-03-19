@@ -97,7 +97,8 @@ function getStepFields(
 export function AgreementWizard() {
   const form = useForm<AgreementFormData>({
     resolver: zodResolver(agreementFormSchema) as unknown as Resolver<AgreementFormData>,
-    mode: "onBlur",
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: DEFAULT_FORM_VALUES,
   });
 
@@ -117,6 +118,12 @@ export function AgreementWizard() {
   const watchedState = form.watch("property.state");
   const watchedStartDate = form.watch("duration.startDate");
   const watchedDurationInMonths = form.watch("duration.durationInMonths");
+  const watchedLandlordName = form.watch("landlord.landlordFullName");
+  const watchedLandlordEmail = form.watch("landlord.landlordEmail");
+  const watchedLandlordMobileNumber = form.watch("landlord.landlordMobileNumber");
+  const watchedContactName = form.watch("contact.contactName");
+  const watchedContactEmail = form.watch("contact.contactEmail");
+  const watchedContactPhone = form.watch("contact.contactPhone");
 
   useEffect(() => {
     if (watchedPincode.replace(/\D/g, "").length !== 6) return;
@@ -133,10 +140,55 @@ export function AgreementWizard() {
       watchedStartDate,
       Number(watchedDurationInMonths) || 0,
     );
-    if (endDate && endDate !== form.getValues("duration.endDate")) {
-      form.setValue("duration.endDate", endDate, { shouldValidate: true });
+    if (endDate !== form.getValues("duration.endDate")) {
+      form.setValue("duration.endDate", endDate || "", {
+        shouldValidate: Boolean(watchedStartDate) || Boolean(watchedDurationInMonths),
+      });
     }
   }, [form, watchedDurationInMonths, watchedStartDate]);
+
+  useEffect(() => {
+    const prefillContactField = (
+      fieldName: FieldPath<AgreementFormData>,
+      nextValue: string,
+      currentValue: string,
+    ) => {
+      const normalizedNextValue = nextValue.trim();
+      if (!normalizedNextValue) return;
+
+      if (!form.getFieldState(fieldName).isDirty && currentValue !== normalizedNextValue) {
+        form.setValue(fieldName, normalizedNextValue, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
+    };
+
+    prefillContactField(
+      "contact.contactName",
+      watchedLandlordName,
+      watchedContactName,
+    );
+    prefillContactField(
+      "contact.contactEmail",
+      watchedLandlordEmail,
+      watchedContactEmail,
+    );
+    prefillContactField(
+      "contact.contactPhone",
+      watchedLandlordMobileNumber,
+      watchedContactPhone,
+    );
+  }, [
+    form,
+    watchedContactEmail,
+    watchedContactName,
+    watchedContactPhone,
+    watchedLandlordEmail,
+    watchedLandlordMobileNumber,
+    watchedLandlordName,
+  ]);
 
   async function goNext() {
     const valid = await form.trigger(getStepFields(currentStep, form.getValues()), {

@@ -1,4 +1,4 @@
-import type { UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { FormField } from "@/components/forms/form-field";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { parseNumberInput } from "@/lib/utils";
 import type { AgreementFormData } from "@/types/agreement";
 
 export function DurationStep({ form }: { form: UseFormReturn<AgreementFormData> }) {
+  const calculatedEndDate = form.watch("duration.endDate");
+
   return (
     <div className="grid gap-6">
       <div className="grid gap-6 md:grid-cols-3">
@@ -42,11 +44,21 @@ export function DurationStep({ form }: { form: UseFormReturn<AgreementFormData> 
           error={form.formState.errors.duration?.endDate?.message}
           hint="Calculated as start date + duration months - 1 day."
         >
-          <Input
-            id="endDate"
-            type="date"
-            readOnly
-            {...form.register("duration.endDate")}
+          <Controller
+            control={form.control}
+            name="duration.endDate"
+            render={({ field }) => (
+              <Input
+                id="endDate"
+                type="date"
+                readOnly
+                name={field.name}
+                ref={field.ref}
+                value={calculatedEndDate || ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
+            )}
           />
         </FormField>
       </div>

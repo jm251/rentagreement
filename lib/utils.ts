@@ -5,6 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getOptionLabel(
+  value: string,
+  options: ReadonlyArray<{ value: string; label: string }>,
+) {
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
 export function parseNumberInput(value: unknown) {
   if (value === "" || value === null || typeof value === "undefined") {
     return undefined;

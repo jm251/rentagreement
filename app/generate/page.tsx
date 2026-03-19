@@ -11,7 +11,7 @@ export default function GeneratePage() {
           Build the agreement step by step.
         </h1>
         <p className="text-muted-foreground">
-          Complete the guided wizard, generate special clauses through FastRouter, and review the final agreement before payment.
+          Complete the guided wizard, generate AI-assisted special clauses, and review the final agreement before payment.
         </p>
       </div>
       <AgreementWizard />
